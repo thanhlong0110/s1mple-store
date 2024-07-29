@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.example.s1mple_store.dtos.Products.CreateProductDto;
 import com.example.s1mple_store.dtos.Products.ProductDto;
@@ -33,6 +33,7 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/v1/products")
 @Validated
+@CrossOrigin(origins = "http://dm0110.com")
 public class ProductController {
 
     private final ProductService productService;
