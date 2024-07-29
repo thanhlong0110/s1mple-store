@@ -4,6 +4,8 @@ import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -47,6 +49,15 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<List<ProductDto>> getAllProducts() {
         List<ProductDto> products = productService.getAllProducts();
+
+        // Add HATEOAS self link to each product
+        for (ProductDto product : products) {
+            Link selfLink = WebMvcLinkBuilder
+                    .linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductById(product.getId()))
+                    .withSelfRel();
+            product.add(selfLink);
+        }
+
         return ResponseEntity.ok(products);
     }
 
@@ -62,6 +73,11 @@ public class ProductController {
         if (product == null) {
             throw new ResourceNotFoundException("Product not found with ID: " + id);
         }
+        // Add HATEOAS self link to the product
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductById(id))
+                .withSelfRel();
+        product.add(selfLink);
+
         return ResponseEntity.ok(product);
     }
 
@@ -74,9 +90,16 @@ public class ProductController {
     @PostMapping
     public ResponseEntity<ProductDto> createProduct(@Valid @RequestBody CreateProductDto productDto) {
         ProductDto createdProduct = productService.createProduct(productDto);
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(createdProduct.getId())
+
+        // Add HATEOAS self link to the created product
+        Link selfLink = WebMvcLinkBuilder
+                .linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductById(createdProduct.getId()))
+                .withSelfRel();
+
+        createdProduct.add(selfLink);
+
+        URI location = WebMvcLinkBuilder
+                .linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductById(createdProduct.getId()))
                 .toUri();
         return ResponseEntity.created(location).body(createdProduct);
     }
@@ -96,6 +119,11 @@ public class ProductController {
         if (updatedProduct == null) {
             throw new ResourceNotFoundException("Product not found with ID: " + id);
         }
+        // Add HATEOAS self link to the updated product
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductById(id))
+                .withSelfRel();
+        updatedProduct.add(selfLink);
+
         return ResponseEntity.ok(updatedProduct);
     }
 
@@ -110,7 +138,7 @@ public class ProductController {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }
-    
+
     // #region ExceptionHandler
 
     /**
