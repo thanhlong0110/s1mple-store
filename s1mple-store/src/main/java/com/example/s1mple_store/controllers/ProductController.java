@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -59,6 +60,10 @@ public class ProductController {
             product.add(selfLink);
         }
 
+        // Create headers with total count
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Total-Count", String.valueOf(products.size()));
+
         return ResponseEntity.ok(products);
     }
 
@@ -74,10 +79,15 @@ public class ProductController {
         if (product == null) {
             throw new ResourceNotFoundException("Product not found with ID: " + id);
         }
+
         // Add HATEOAS self link to the product
         Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductById(id))
                 .withSelfRel();
         product.add(selfLink);
+
+        //This helps in tracking and debugging specific requests, and can also be used for correlating logs.
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Request-ID", UUID.randomUUID().toString());
 
         return ResponseEntity.ok(product);
     }
@@ -102,6 +112,12 @@ public class ProductController {
         URI location = WebMvcLinkBuilder
                 .linkTo(WebMvcLinkBuilder.methodOn(ProductController.class).getProductById(createdProduct.getId()))
                 .toUri();
+
+        //Timestamp indicating when the product was created. This can be useful for tracking when the resource was added and for audit purposes.
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation(location);
+        headers.add("X-Product-Created-At", String.valueOf(System.currentTimeMillis()));
+
         return ResponseEntity.created(location).body(createdProduct);
     }
 
@@ -125,6 +141,10 @@ public class ProductController {
                 .withSelfRel();
         updatedProduct.add(selfLink);
 
+        //This helps clients understand when the last change occurred and can be used for caching
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Last-Modified", String.valueOf(System.currentTimeMillis()));
+
         return ResponseEntity.ok(updatedProduct);
     }
 
@@ -137,6 +157,11 @@ public class ProductController {
     @DeleteMapping("/products/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable UUID id) {
         productService.deleteProduct(id);
+
+        //This helps clients understand the outcome of the operation and can be useful for logging.
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Operation-Status", "Deleted Successfully");
+
         return ResponseEntity.noContent().build();
     }
 
